@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Cashier 專項特訓 (連英文讀法)</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
+        h1 { color: #f1c40f; font-size: 1.5em; }
+        
+        /* 模式選擇器 */
+        .mode-selector { background: #34495e; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .mode-selector label { background: #2c3e50; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; font-weight: bold; transition: 0.3s; }
+        .mode-selector input[type="radio"] { display: none; }
+        .mode-selector input[type="radio"]:checked + label { background: #e74c3c; border-color: #f1c40f; color: white; }
+
+        .table-felt {
+            background-color: #27ae60; border: 10px solid #2c3e50; border-radius: 15px;
+            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 200px;
+            margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center;
+        }
+        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; }
+        
+        /* 物品設計 */
+        .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; border: 4px dashed rgba(255,255,255,0.7); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px black; }
+        .chip-1000 { background-color: #f39c12; } .chip-500 { background-color: #8e44ad; } .chip-100 { background-color: #222; } .chip-25 { background-color: #2ecc71; } .chip-5 { background-color: #e74c3c; }
+        
+        .bill { background-color: #85bb65; color: #004d00; padding: 10px 15px; border: 2px solid #004d00; border-radius: 4px; font-weight: bold; font-size: 16px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .ticket { background-color: #fffacd; color: #333; padding: 15px 30px; border: 1px dashed #7f8c8d; font-family: monospace; font-weight: bold; font-size: 20px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .ticket span { font-size: 10px; color: #7f8c8d; display: block; margin-bottom: 5px; }
+
+        .coin { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; box-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
+        .coin-toonie { width: 55px; height: 55px; background: radial-gradient(circle, #f1c40f 45%, #ecf0f1 50%); border: 2px solid #bdc3c7; } 
+        .coin-loonie { width: 45px; height: 45px; background-color: #f1c40f; border: 2px solid #d4ac0d; } 
+        .coin-quarter { width: 40px; height: 40px; background-color: #ecf0f1; border: 2px solid #bdc3c7; font-size: 12px; } 
+        .coin-dime { width: 28px; height: 28px; background-color: #ecf0f1; border: 2px solid #bdc3c7; font-size: 10px; } 
+        .coin-nickel { width: 35px; height: 35px; background-color: #ecf0f1; border: 2px solid #bdc3c7; font-size: 11px; }
+
+        button { background-color: #3498db; color: white; border: none; padding: 12px 24px; font-size: 1.1em; border-radius: 5px; cursor: pointer; margin: 10px; font-weight: bold; }
+        button:hover { background-color: #2980b9; }
+        button.show-btn { background-color: #e74c3c; }
+        button.show-btn:hover { background-color: #c0392b; }
+
+        .answer-section { display: none; background: #ecf0f1; color: #2c3e50; margin-top: 20px; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.2em; }
+        .highlight { color: #e74c3c; font-weight: bold; font-size: 2em; margin-top: 10px; display: block; }
+        .rounding-note { font-size: 0.8em; color: #7f8c8d; margin-top: 5px; }
+        .english-words { font-style: italic; color: #16a085; font-size: 1.2em; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #bdc3c7; }
+    </style>
+</head>
+<body>
+
+    <h1>🎰 Casino Cashier 專項特訓</h1>
+
+    <div class="mode-selector">
+        <input type="radio" id="mode-token" name="practice-mode" value="token" checked onchange="generateDesk()">
+        <label for="mode-token">🪙 淨籌碼 (Tokens)</label>
+
+        <input type="radio" id="mode-ticket" name="practice-mode" value="ticket" onchange="generateDesk()">
+        <label for="mode-ticket">🧾 Ticket + 現金</label>
+
+        <input type="radio" id="mode-cash" name="practice-mode" value="cash" onchange="generateDesk()">
+        <label for="mode-cash">💵 唱錢 (數散紙/銀紙)</label>
+    </div>
+    
+    <div id="tableFelt" class="table-felt">
+        </div>
+
+    <button class="show-btn" onclick="showAnswer()">睇答案 (找換/總值)</button>
+    <button onclick="generateDesk()">下一題</button>
+
+    <div id="answerSection" class="answer-section">
+        <p>💵 最終需要找換 / 唱出嘅現金總額：</p>
+        <span id="finalAmount" class="highlight"></span>
+        <div id="roundingNote" class="rounding-note"></div>
+        <p style="margin-top:15px; margin-bottom:5px;">🗣️ 讀畀客聽嘅英文：</p>
+        <div id="englishWords" class="english-words"></div>
+    </div>
+
+    <script>
+        let currentTotal = 0;
+
+        function generateDesk() {
+            document.getElementById('answerSection').style.display = 'none';
+            const table = document.getElementById('tableFelt');
+            table.innerHTML = '';
+            currentTotal = 0;
+
+            const mode = document.querySelector('input[name="practice-mode"]:checked').value;
+            let htmlContent = '<div class="item-group">';
+
+            if (mode === 'token') {
+                const tokenTypes = [
+                    {val: 1000, class: 'chip-1000'}, {val: 500, class: 'chip-500'}, 
+                    {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, {val: 5, class: 'chip-5'}
+                ];
+                let numTokens = Math.floor(Math.random() * 8) + 3; 
+                for(let i=0; i<numTokens; i++) {
+                    let token = tokenTypes[Math.floor(Math.random() * tokenTypes.length)];
+                    currentTotal += token.val;
+                    htmlContent += `<div class="chip ${token.class}">$${token.val}</div>`;
+                }
+            } 
+            else if (mode === 'ticket') {
+                let ticketVal = parseFloat((Math.random() * 200 + 5).toFixed(2));
+                htmlContent += `<div class="ticket" style="width:100%; margin-bottom:15px;"><span>CASHOUT TICKET</span>$${ticketVal.toFixed(2)}</div>`;
+                currentTotal += ticketVal;
+
+                let target = Math.ceil(ticketVal / 5) * 5; 
+                if (target <= ticketVal) target += 5;
+                let cashNeeded = Math.round((target - ticketVal) * 100) / 100;
+                
+                if (Math.random() > 0.5) cashNeeded += (Math.random() > 0.5 ? 2 : 0.5);
+                
+                currentTotal += cashNeeded;
+                htmlContent += generateCashHTML(cashNeeded);
+            } 
+            else if (mode === 'cash') {
+                let amountToExchange = parseFloat((Math.random() * 50 + 5).toFixed(2));
+                amountToExchange = Math.round(amountToExchange * 20) / 20; 
+                currentTotal += amountToExchange;
+                htmlContent += generateCashHTML(amountToExchange);
+            }
+
+            htmlContent += '</div>';
+            table.innerHTML = htmlContent;
+        }
+
+        function generateCashHTML(amount) {
+            let html = '';
+            let remaining = Math.round(amount * 100);
+            const denoms = [
+                { val: 2000, type: 'bill', label: '$20' },
+                { val: 1000, type: 'bill', label: '$10' },
+                { val: 500, type: 'bill', label: '$5' },
+                { val: 200, type: 'coin', label: '$2', class: 'coin-toonie' },
+                { val: 100, type: 'coin', label: '$1', class: 'coin-loonie' },
+                { val: 25, type: 'coin', label: '25¢', class: 'coin-quarter' },
+                { val: 10, type: 'coin', label: '10¢', class: 'coin-dime' },
+                { val: 5, type: 'coin', label: '5¢', class: 'coin-nickel' }
+            ];
+            
+            for (let d of denoms) {
+                while (remaining >= d.val) {
+                    if(d.type === 'bill') {
+                        html += `<div class="bill">${d.label}</div>`;
+                    } else {
+                        html += `<div class="coin ${d.class}">${d.label}</div>`;
+                    }
+                    remaining -= d.val;
+                }
+            }
+            return html;
+        }
+
+        // 將數字轉做英文全寫嘅 function
+        function numberToWords(amount) {
+            amount = Math.round(amount * 100) / 100;
+            if (amount === 0) return "Zero dollars";
+
+            let dollars = Math.floor(amount);
+            let cents = Math.round((amount - dollars) * 100);
+
+            function convertGroup(n) {
+                const units = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+                const teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+                let res = "";
+                if (n > 99) { res += units[Math.floor(n / 100)] + " hundred "; n %= 100; }
+                if (n > 9 && n < 20) { res += teens[n - 10] + " "; } 
+                else {
+                    if (n >= 20) {
+                        res += tens[Math.floor(n / 10)];
+                        if (n % 10 > 0) res += "-" + units[n % 10] + " "; else res += " ";
+                    } else if (n > 0) { res += units[n] + " "; }
+                }
+                return res.trim();
+            }
+
+            let result = "";
+            if (dollars > 0) {
+                if (dollars >= 1000) { let thousands = Math.floor(dollars / 1000); result += convertGroup(thousands) + " thousand "; dollars %= 1000; }
+                if (dollars > 0) { result += convertGroup(dollars); }
+                result = result.trim() + (dollars === 1 ? " dollar" : " dollars");
+            }
+
+            if (cents > 0) {
+                if (result !== "") result += " and ";
+                result += convertGroup(cents) + (cents === 1 ? " cent" : " cents");
+            }
+
+            return result.charAt(0).toUpperCase() + result.slice(1);
+        }
+
+        function showAnswer() {
+            document.getElementById('answerSection').style.display = 'block';
+            
+            // 加拿大現金 Rounding
+            let roundedTotal = Math.round(currentTotal * 20) / 20;
+            document.getElementById('finalAmount').innerText = "$" + roundedTotal.toFixed(2);
+            
+            // 顯示英文
+            document.getElementById('englishWords').innerText = numberToWords(roundedTotal);
+            
+            let diff = Math.abs(currentTotal - roundedTotal);
+            if (diff > 0.001) {
+                document.getElementById('roundingNote').innerText = `(精確總數: $${currentTotal.toFixed(2)}, 已自動 Round 去最近嘅 $0.05)`;
+            } else {
+                document.getElementById('roundingNote').innerText = `(無須 Rounding，數目剛剛好)`;
+            }
+        }
+
+        window.onload = generateDesk;
+    </script>
+</body>
+</html>
