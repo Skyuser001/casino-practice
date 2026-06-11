@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Cashier 專項特訓 (連英文讀法)</title>
+    <title>Casino Cashier 專項特訓 (支援手動拖曳排位)</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
+        body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; overflow-x: hidden; }
         h1 { color: #f1c40f; font-size: 1.5em; }
         
-        /* 模式選擇器 */
         .mode-selector { background: #34495e; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .mode-selector label { background: #2c3e50; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; font-weight: bold; transition: 0.3s; }
         .mode-selector input[type="radio"] { display: none; }
@@ -16,11 +15,22 @@
 
         .table-felt {
             background-color: #27ae60; border: 10px solid #2c3e50; border-radius: 15px;
-            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 200px;
+            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 300px;
             margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center;
+            position: relative; /* 確保拖曳範圍 */
         }
-        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; }
+        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; position: relative; }
         
+        /* 加入可拖曳物品嘅共用設定 */
+        .draggable {
+            cursor: grab;
+            touch-action: none; /* 防止手機拖拉時畫面跟住捲動 */
+            user-select: none; /* 防止反白文字 */
+            z-index: 1;
+            position: relative;
+        }
+        .draggable:active { cursor: grabbing; z-index: 1000 !important; }
+
         /* 物品設計 */
         .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; border: 4px dashed rgba(255,255,255,0.7); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px black; }
         .chip-1000 { background-color: #f39c12; } .chip-500 { background-color: #8e44ad; } .chip-100 { background-color: #222; } .chip-25 { background-color: #2ecc71; } .chip-5 { background-color: #e74c3c; }
@@ -45,6 +55,8 @@
         .highlight { color: #e74c3c; font-weight: bold; font-size: 2em; margin-top: 10px; display: block; }
         .rounding-note { font-size: 0.8em; color: #7f8c8d; margin-top: 5px; }
         .english-words { font-style: italic; color: #16a085; font-size: 1.2em; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #bdc3c7; }
+        
+        .drag-instruction { color: #ecf0f1; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -62,8 +74,11 @@
         <label for="mode-cash">💵 唱錢 (數散紙/銀紙)</label>
     </div>
     
+    <p class="drag-instruction">👆 提示：你可以用手指或滑鼠隨意拖曳移動籌碼同硬幣，方便分類計數！</p>
+
     <div id="tableFelt" class="table-felt">
-        </div>
+        <!-- 物品會喺度出現 -->
+    </div>
 
     <button class="show-btn" onclick="showAnswer()">睇答案 (找換/總值)</button>
     <button onclick="generateDesk()">下一題</button>
@@ -93,16 +108,16 @@
                     {val: 1000, class: 'chip-1000'}, {val: 500, class: 'chip-500'}, 
                     {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, {val: 5, class: 'chip-5'}
                 ];
-                let numTokens = Math.floor(Math.random() * 8) + 3; 
+                let numTokens = Math.floor(Math.random() * 12) + 4; // 增多啲籌碼等你拖
                 for(let i=0; i<numTokens; i++) {
                     let token = tokenTypes[Math.floor(Math.random() * tokenTypes.length)];
                     currentTotal += token.val;
-                    htmlContent += `<div class="chip ${token.class}">$${token.val}</div>`;
+                    htmlContent += `<div class="chip draggable ${token.class}">$${token.val}</div>`;
                 }
             } 
             else if (mode === 'ticket') {
                 let ticketVal = parseFloat((Math.random() * 200 + 5).toFixed(2));
-                htmlContent += `<div class="ticket" style="width:100%; margin-bottom:15px;"><span>CASHOUT TICKET</span>$${ticketVal.toFixed(2)}</div>`;
+                htmlContent += `<div class="ticket draggable" style="width:200px; margin-bottom:15px; margin-left:auto; margin-right:auto;"><span>CASHOUT TICKET</span>$${ticketVal.toFixed(2)}</div>`;
                 currentTotal += ticketVal;
 
                 let target = Math.ceil(ticketVal / 5) * 5; 
@@ -123,6 +138,9 @@
 
             htmlContent += '</div>';
             table.innerHTML = htmlContent;
+            
+            // 啟動拖曳功能
+            setTimeout(enableDragAndDrop, 100);
         }
 
         function generateCashHTML(amount) {
@@ -142,9 +160,9 @@
             for (let d of denoms) {
                 while (remaining >= d.val) {
                     if(d.type === 'bill') {
-                        html += `<div class="bill">${d.label}</div>`;
+                        html += `<div class="bill draggable">${d.label}</div>`;
                     } else {
-                        html += `<div class="coin ${d.class}">${d.label}</div>`;
+                        html += `<div class="coin draggable ${d.class}">${d.label}</div>`;
                     }
                     remaining -= d.val;
                 }
@@ -152,7 +170,48 @@
             return html;
         }
 
-        // 將數字轉做英文全寫嘅 function
+        // --- 加入拖曳核心邏輯 (支援滑鼠與觸控螢幕) ---
+        function enableDragAndDrop() {
+            const draggables = document.querySelectorAll('.draggable');
+            let highestZIndex = 10;
+
+            draggables.forEach(item => {
+                let currentX = 0, currentY = 0, initialX, initialY;
+                
+                // 處理 Pointer Down (滑鼠按下 / 手指㩒落去)
+                item.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    
+                    // 確保拖動嗰件物品會喺最頂層
+                    highestZIndex++;
+                    item.style.zIndex = highestZIndex;
+                    
+                    initialX = e.clientX - currentX;
+                    initialY = e.clientY - currentY;
+                    
+                    item.setPointerCapture(e.pointerId);
+
+                    // 處理移動
+                    const onPointerMove = (e) => {
+                        e.preventDefault();
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                        item.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                    };
+
+                    // 處理放手
+                    const onPointerUp = (e) => {
+                        item.removeEventListener('pointermove', onPointerMove);
+                        item.removeEventListener('pointerup', onPointerUp);
+                        item.releasePointerCapture(e.pointerId);
+                    };
+
+                    item.addEventListener('pointermove', onPointerMove);
+                    item.addEventListener('pointerup', onPointerUp);
+                });
+            });
+        }
+
         function numberToWords(amount) {
             amount = Math.round(amount * 100) / 100;
             if (amount === 0) return "Zero dollars";
@@ -194,14 +253,9 @@
 
         function showAnswer() {
             document.getElementById('answerSection').style.display = 'block';
-            
-            // 加拿大現金 Rounding
             let roundedTotal = Math.round(currentTotal * 20) / 20;
             document.getElementById('finalAmount').innerText = "$" + roundedTotal.toFixed(2);
-            
-            // 顯示英文
             document.getElementById('englishWords').innerText = numberToWords(roundedTotal);
-            
             let diff = Math.abs(currentTotal - roundedTotal);
             if (diff > 0.001) {
                 document.getElementById('roundingNote').innerText = `(精確總數: $${currentTotal.toFixed(2)}, 已自動 Round 去最近嘅 $0.05)`;
