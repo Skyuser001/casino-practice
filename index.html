@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Cashier 專項特訓 (支援手動拖曳排位)</title>
+    <title>Casino Cashier 特訓 (精確除錯版)</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; overflow-x: hidden; }
         h1 { color: #f1c40f; font-size: 1.5em; }
@@ -15,23 +15,15 @@
 
         .table-felt {
             background-color: #27ae60; border: 10px solid #2c3e50; border-radius: 15px;
-            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 300px;
+            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 350px;
             margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center;
-            position: relative; /* 確保拖曳範圍 */
-        }
-        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; position: relative; }
-        
-        /* 加入可拖曳物品嘅共用設定 */
-        .draggable {
-            cursor: grab;
-            touch-action: none; /* 防止手機拖拉時畫面跟住捲動 */
-            user-select: none; /* 防止反白文字 */
-            z-index: 1;
             position: relative;
         }
+        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; position: relative; }
+        
+        .draggable { cursor: grab; touch-action: none; user-select: none; z-index: 1; position: relative; }
         .draggable:active { cursor: grabbing; z-index: 1000 !important; }
 
-        /* 物品設計 */
         .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; border: 4px dashed rgba(255,255,255,0.7); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px black; }
         .chip-1000 { background-color: #f39c12; } .chip-500 { background-color: #8e44ad; } .chip-100 { background-color: #222; } .chip-25 { background-color: #2ecc71; } .chip-5 { background-color: #e74c3c; }
         
@@ -71,20 +63,18 @@
         <label for="mode-ticket">🧾 Ticket + 現金</label>
 
         <input type="radio" id="mode-cash" name="practice-mode" value="cash" onchange="generateDesk()">
-        <label for="mode-cash">💵 唱錢 (數散紙/銀紙)</label>
+        <label for="mode-cash">🪙 唱錢 (全散紙地獄)</label>
     </div>
     
-    <p class="drag-instruction">👆 提示：你可以用手指或滑鼠隨意拖曳移動籌碼同硬幣，方便分類計數！</p>
+    <p class="drag-instruction">👆 提示：請隨意拖曳移動籌碼同硬幣，將散紙撥埋一齊湊夠一蚊！</p>
 
-    <div id="tableFelt" class="table-felt">
-        <!-- 物品會喺度出現 -->
-    </div>
+    <div id="tableFelt" class="table-felt"></div>
 
     <button class="show-btn" onclick="showAnswer()">睇答案 (找換/總值)</button>
     <button onclick="generateDesk()">下一題</button>
 
     <div id="answerSection" class="answer-section">
-        <p>💵 最終需要找換 / 唱出嘅現金總額：</p>
+        <p>💵 總數：</p>
         <span id="finalAmount" class="highlight"></span>
         <div id="roundingNote" class="rounding-note"></div>
         <p style="margin-top:15px; margin-bottom:5px;">🗣️ 讀畀客聽嘅英文：</p>
@@ -108,7 +98,7 @@
                     {val: 1000, class: 'chip-1000'}, {val: 500, class: 'chip-500'}, 
                     {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, {val: 5, class: 'chip-5'}
                 ];
-                let numTokens = Math.floor(Math.random() * 12) + 4; // 增多啲籌碼等你拖
+                let numTokens = Math.floor(Math.random() * 10) + 4; 
                 for(let i=0; i<numTokens; i++) {
                     let token = tokenTypes[Math.floor(Math.random() * tokenTypes.length)];
                     currentTotal += token.val;
@@ -118,35 +108,37 @@
             else if (mode === 'ticket') {
                 let ticketVal = parseFloat((Math.random() * 200 + 5).toFixed(2));
                 htmlContent += `<div class="ticket draggable" style="width:200px; margin-bottom:15px; margin-left:auto; margin-right:auto;"><span>CASHOUT TICKET</span>$${ticketVal.toFixed(2)}</div>`;
-                currentTotal += ticketVal;
-
+                
                 let target = Math.ceil(ticketVal / 5) * 5; 
                 if (target <= ticketVal) target += 5;
-                let cashNeeded = Math.round((target - ticketVal) * 100) / 100;
+                
+                // 計算差距，並將客人畀嘅現金強制變成 0.05 嘅倍數，防止幽靈神沙
+                let diff = Math.round((target - ticketVal) * 100) / 100;
+                let cashNeeded = Math.ceil(diff * 20) / 20; 
                 
                 if (Math.random() > 0.5) cashNeeded += (Math.random() > 0.5 ? 2 : 0.5);
                 
-                currentTotal += cashNeeded;
-                htmlContent += generateCashHTML(cashNeeded);
+                // 確保精準度
+                currentTotal = Math.round((ticketVal + cashNeeded) * 100) / 100;
+                htmlContent += generateCashHTML(cashNeeded, false);
             } 
             else if (mode === 'cash') {
-                let amountToExchange = parseFloat((Math.random() * 50 + 5).toFixed(2));
+                let amountToExchange = parseFloat((Math.random() * 23 + 2).toFixed(2));
                 amountToExchange = Math.round(amountToExchange * 20) / 20; 
-                currentTotal += amountToExchange;
-                htmlContent += generateCashHTML(amountToExchange);
+                currentTotal = amountToExchange;
+                htmlContent += generateCashHTML(amountToExchange, true);
             }
 
             htmlContent += '</div>';
             table.innerHTML = htmlContent;
-            
-            // 啟動拖曳功能
             setTimeout(enableDragAndDrop, 100);
         }
 
-        function generateCashHTML(amount) {
+        function generateCashHTML(amount, coinsOnly) {
             let html = '';
             let remaining = Math.round(amount * 100);
-            const denoms = [
+            
+            let denoms = [
                 { val: 2000, type: 'bill', label: '$20' },
                 { val: 1000, type: 'bill', label: '$10' },
                 { val: 500, type: 'bill', label: '$5' },
@@ -156,21 +148,34 @@
                 { val: 10, type: 'coin', label: '10¢', class: 'coin-dime' },
                 { val: 5, type: 'coin', label: '5¢', class: 'coin-nickel' }
             ];
-            
-            for (let d of denoms) {
-                while (remaining >= d.val) {
-                    if(d.type === 'bill') {
-                        html += `<div class="bill draggable">${d.label}</div>`;
-                    } else {
-                        html += `<div class="coin draggable ${d.class}">${d.label}</div>`;
+
+            if (coinsOnly) {
+                let coinDenoms = denoms.filter(d => d.type === 'coin');
+                while (remaining >= 5) {
+                    let validCoins = coinDenoms.filter(d => d.val <= remaining);
+                    let pickIndex = 0;
+                    if (validCoins.length > 1 && Math.random() > 0.4) {
+                        pickIndex = 1; 
                     }
-                    remaining -= d.val;
+                    let coin = validCoins[pickIndex];
+                    html += `<div class="coin draggable ${coin.class}">${coin.label}</div>`;
+                    remaining -= coin.val;
+                }
+            } else {
+                for (let d of denoms) {
+                    while (remaining >= d.val) {
+                        if(d.type === 'bill') {
+                            html += `<div class="bill draggable">${d.label}</div>`;
+                        } else {
+                            html += `<div class="coin draggable ${d.class}">${d.label}</div>`;
+                        }
+                        remaining -= d.val;
+                    }
                 }
             }
             return html;
         }
 
-        // --- 加入拖曳核心邏輯 (支援滑鼠與觸控螢幕) ---
         function enableDragAndDrop() {
             const draggables = document.querySelectorAll('.draggable');
             let highestZIndex = 10;
@@ -178,20 +183,14 @@
             draggables.forEach(item => {
                 let currentX = 0, currentY = 0, initialX, initialY;
                 
-                // 處理 Pointer Down (滑鼠按下 / 手指㩒落去)
                 item.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
-                    
-                    // 確保拖動嗰件物品會喺最頂層
                     highestZIndex++;
                     item.style.zIndex = highestZIndex;
-                    
                     initialX = e.clientX - currentX;
                     initialY = e.clientY - currentY;
-                    
                     item.setPointerCapture(e.pointerId);
 
-                    // 處理移動
                     const onPointerMove = (e) => {
                         e.preventDefault();
                         currentX = e.clientX - initialX;
@@ -199,7 +198,6 @@
                         item.style.transform = `translate(${currentX}px, ${currentY}px)`;
                     };
 
-                    // 處理放手
                     const onPointerUp = (e) => {
                         item.removeEventListener('pointermove', onPointerMove);
                         item.removeEventListener('pointerup', onPointerUp);
