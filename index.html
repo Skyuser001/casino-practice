@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Cashier (大堆頭地獄特訓)</title>
+    <title>Casino Cashier (大堆頭 + 全面額籌碼特訓)</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 900px; margin: 0 auto; padding: 20px; text-align: center; overflow-x: hidden; }
         h1 { color: #f1c40f; font-size: 1.5em; }
@@ -29,7 +29,15 @@
         .draggable:active { cursor: grabbing; z-index: 1000 !important; }
 
         .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; border: 4px dashed rgba(255,255,255,0.7); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px black; }
-        .chip-1000 { background-color: #f39c12; } .chip-500 { background-color: #8e44ad; } .chip-100 { background-color: #222; } .chip-25 { background-color: #2ecc71; } .chip-5 { background-color: #e74c3c; }
+        .chip-1000 { background-color: #f39c12; } /* 橙黃色 */
+        .chip-500 { background-color: #8e44ad; }  /* 紫色 */
+        .chip-100 { background-color: #222; }     /* 黑色 */
+        .chip-25 { background-color: #2ecc71; }   /* 綠色 */
+        .chip-5 { background-color: #e74c3c; }    /* 紅色 */
+        
+        /* 新增：白色 $1 同 橙色 50¢ */
+        .chip-1 { background-color: #ecf0f1; color: #333; border-color: #bdc3c7; text-shadow: none; } 
+        .chip-05 { background-color: #e67e22; } 
         
         .bill { background-color: #85bb65; color: #004d00; padding: 10px 15px; border: 2px solid #004d00; border-radius: 4px; font-weight: bold; font-size: 16px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         .ticket { background-color: #fffacd; color: #333; padding: 15px 30px; border: 1px dashed #7f8c8d; font-family: monospace; font-weight: bold; font-size: 20px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
@@ -104,17 +112,22 @@
             let htmlContent = '<div class="item-group">';
 
             if (mode === 'token') {
+                // 籌碼陣容加入 $1 同 $0.5
                 const tokenTypes = [
                     {val: 1000, class: 'chip-1000'}, {val: 500, class: 'chip-500'}, 
-                    {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, {val: 5, class: 'chip-5'}
+                    {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, 
+                    {val: 5, class: 'chip-5'}, {val: 1, class: 'chip-1'}, {val: 0.5, class: 'chip-05'}
                 ];
-                let baseTokens = Math.floor(Math.random() * 8) + 4; 
-                let numTokens = isMassive ? baseTokens * 4 : baseTokens; // 地獄模式出 4 倍籌碼
+                let baseTokens = Math.floor(Math.random() * 8) + 5; 
+                let numTokens = isMassive ? baseTokens * 4 : baseTokens; 
                 
                 for(let i=0; i<numTokens; i++) {
                     let token = tokenTypes[Math.floor(Math.random() * tokenTypes.length)];
                     currentTotal += token.val;
-                    htmlContent += `<div class="chip draggable ${token.class}">$${token.val}</div>`;
+                    
+                    // 特殊處理 $0.5 的文字顯示
+                    let displayLabel = token.val === 0.5 ? '50¢' : `$${token.val}`;
+                    htmlContent += `<div class="chip draggable ${token.class}">${displayLabel}</div>`;
                 }
             } 
             else if (mode === 'ticket') {
@@ -127,7 +140,6 @@
                 let diff = Math.round((target - ticketVal) * 100) / 100;
                 let cashNeeded = Math.ceil(diff * 20) / 20; 
                 
-                // 地獄模式下，個客會畀極多無謂嘅散紙
                 if (isMassive) {
                     cashNeeded += parseFloat((Math.floor(Math.random() * 5) + 2).toFixed(2));
                     cashNeeded = Math.round(cashNeeded * 20) / 20;
@@ -139,7 +151,6 @@
                 htmlContent += generateCashHTML(cashNeeded, false, isMassive);
             } 
             else if (mode === 'cash') {
-                // 地獄模式：高達 $35 嘅全散紙山
                 let maxAmount = isMassive ? 35 : 8;
                 let amountToExchange = parseFloat((Math.random() * maxAmount + 2).toFixed(2));
                 amountToExchange = Math.round(amountToExchange * 20) / 20; 
@@ -173,7 +184,6 @@
                     let validCoins = coinDenoms.filter(d => d.val <= remaining);
                     let pickIndex = 0;
                     
-                    // 地獄模式：強制優先派細面額硬幣 (逼你數多啲)
                     if (isMassive && validCoins.length > 2 && Math.random() > 0.2) {
                         pickIndex = Math.floor(Math.random() * (validCoins.length - 1)) + 1; 
                     } else if (validCoins.length > 1 && Math.random() > 0.4) {
