@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Cashier 特訓 (精確除錯版)</title>
+    <title>Casino Cashier (大堆頭地獄特訓)</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; overflow-x: hidden; }
+        body { font-family: Arial, sans-serif; background-color: #1a252f; color: #ecf0f1; max-width: 900px; margin: 0 auto; padding: 20px; text-align: center; overflow-x: hidden; }
         h1 { color: #f1c40f; font-size: 1.5em; }
         
-        .mode-selector { background: #34495e; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .mode-selector { background: #34495e; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .mode-selector label { background: #2c3e50; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; font-weight: bold; transition: 0.3s; }
         .mode-selector input[type="radio"] { display: none; }
         .mode-selector input[type="radio"]:checked + label { background: #e74c3c; border-color: #f1c40f; color: white; }
 
+        .modifier-box { background: #e74c3c; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: inline-block; border: 2px dashed #f1c40f; }
+        .modifier-box label { font-weight: bold; font-size: 1.1em; cursor: pointer; color: white; }
+        .modifier-box input[type="checkbox"] { transform: scale(1.5); margin-right: 10px; cursor: pointer; }
+
         .table-felt {
             background-color: #27ae60; border: 10px solid #2c3e50; border-radius: 15px;
-            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 350px;
+            padding: 30px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-height: 400px;
             margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center;
             position: relative;
         }
-        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; position: relative; }
+        .item-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; position: relative; }
         
         .draggable { cursor: grab; touch-action: none; user-select: none; z-index: 1; position: relative; }
         .draggable:active { cursor: grabbing; z-index: 1000 !important; }
@@ -40,8 +44,8 @@
 
         button { background-color: #3498db; color: white; border: none; padding: 12px 24px; font-size: 1.1em; border-radius: 5px; cursor: pointer; margin: 10px; font-weight: bold; }
         button:hover { background-color: #2980b9; }
-        button.show-btn { background-color: #e74c3c; }
-        button.show-btn:hover { background-color: #c0392b; }
+        button.show-btn { background-color: #2ecc71; color: #1a252f; }
+        button.show-btn:hover { background-color: #27ae60; }
 
         .answer-section { display: none; background: #ecf0f1; color: #2c3e50; margin-top: 20px; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.2em; }
         .highlight { color: #e74c3c; font-weight: bold; font-size: 2em; margin-top: 10px; display: block; }
@@ -53,7 +57,7 @@
 </head>
 <body>
 
-    <h1>🎰 Casino Cashier 專項特訓</h1>
+    <h1>🎰 Casino Cashier 大堆頭特訓</h1>
 
     <div class="mode-selector">
         <input type="radio" id="mode-token" name="practice-mode" value="token" checked onchange="generateDesk()">
@@ -63,10 +67,15 @@
         <label for="mode-ticket">🧾 Ticket + 現金</label>
 
         <input type="radio" id="mode-cash" name="practice-mode" value="cash" onchange="generateDesk()">
-        <label for="mode-cash">🪙 唱錢 (全散紙地獄)</label>
+        <label for="mode-cash">🪙 唱錢 (全散紙)</label>
     </div>
     
-    <p class="drag-instruction">👆 提示：請隨意拖曳移動籌碼同硬幣，將散紙撥埋一齊湊夠一蚊！</p>
+    <div class="modifier-box">
+        <input type="checkbox" id="massiveMode" onchange="generateDesk()">
+        <label for="massiveMode">🔥 開啟「大堆頭地獄模式」(海量數量)</label>
+    </div>
+    
+    <p class="drag-instruction">👆 提示：善用滑鼠/手指拖曳，將大堆硬幣分拆成 $1.00 一堆！</p>
 
     <div id="tableFelt" class="table-felt"></div>
 
@@ -91,6 +100,7 @@
             currentTotal = 0;
 
             const mode = document.querySelector('input[name="practice-mode"]:checked').value;
+            const isMassive = document.getElementById('massiveMode').checked;
             let htmlContent = '<div class="item-group">';
 
             if (mode === 'token') {
@@ -98,7 +108,9 @@
                     {val: 1000, class: 'chip-1000'}, {val: 500, class: 'chip-500'}, 
                     {val: 100, class: 'chip-100'}, {val: 25, class: 'chip-25'}, {val: 5, class: 'chip-5'}
                 ];
-                let numTokens = Math.floor(Math.random() * 10) + 4; 
+                let baseTokens = Math.floor(Math.random() * 8) + 4; 
+                let numTokens = isMassive ? baseTokens * 4 : baseTokens; // 地獄模式出 4 倍籌碼
+                
                 for(let i=0; i<numTokens; i++) {
                     let token = tokenTypes[Math.floor(Math.random() * tokenTypes.length)];
                     currentTotal += token.val;
@@ -112,21 +124,27 @@
                 let target = Math.ceil(ticketVal / 5) * 5; 
                 if (target <= ticketVal) target += 5;
                 
-                // 計算差距，並將客人畀嘅現金強制變成 0.05 嘅倍數，防止幽靈神沙
                 let diff = Math.round((target - ticketVal) * 100) / 100;
                 let cashNeeded = Math.ceil(diff * 20) / 20; 
                 
-                if (Math.random() > 0.5) cashNeeded += (Math.random() > 0.5 ? 2 : 0.5);
+                // 地獄模式下，個客會畀極多無謂嘅散紙
+                if (isMassive) {
+                    cashNeeded += parseFloat((Math.floor(Math.random() * 5) + 2).toFixed(2));
+                    cashNeeded = Math.round(cashNeeded * 20) / 20;
+                } else if (Math.random() > 0.5) {
+                    cashNeeded += (Math.random() > 0.5 ? 2 : 0.5);
+                }
                 
-                // 確保精準度
                 currentTotal = Math.round((ticketVal + cashNeeded) * 100) / 100;
-                htmlContent += generateCashHTML(cashNeeded, false);
+                htmlContent += generateCashHTML(cashNeeded, false, isMassive);
             } 
             else if (mode === 'cash') {
-                let amountToExchange = parseFloat((Math.random() * 23 + 2).toFixed(2));
+                // 地獄模式：高達 $35 嘅全散紙山
+                let maxAmount = isMassive ? 35 : 8;
+                let amountToExchange = parseFloat((Math.random() * maxAmount + 2).toFixed(2));
                 amountToExchange = Math.round(amountToExchange * 20) / 20; 
                 currentTotal = amountToExchange;
-                htmlContent += generateCashHTML(amountToExchange, true);
+                htmlContent += generateCashHTML(amountToExchange, true, isMassive);
             }
 
             htmlContent += '</div>';
@@ -134,7 +152,7 @@
             setTimeout(enableDragAndDrop, 100);
         }
 
-        function generateCashHTML(amount, coinsOnly) {
+        function generateCashHTML(amount, coinsOnly, isMassive) {
             let html = '';
             let remaining = Math.round(amount * 100);
             
@@ -154,9 +172,14 @@
                 while (remaining >= 5) {
                     let validCoins = coinDenoms.filter(d => d.val <= remaining);
                     let pickIndex = 0;
-                    if (validCoins.length > 1 && Math.random() > 0.4) {
+                    
+                    // 地獄模式：強制優先派細面額硬幣 (逼你數多啲)
+                    if (isMassive && validCoins.length > 2 && Math.random() > 0.2) {
+                        pickIndex = Math.floor(Math.random() * (validCoins.length - 1)) + 1; 
+                    } else if (validCoins.length > 1 && Math.random() > 0.4) {
                         pickIndex = 1; 
                     }
+                    
                     let coin = validCoins[pickIndex];
                     html += `<div class="coin draggable ${coin.class}">${coin.label}</div>`;
                     remaining -= coin.val;
